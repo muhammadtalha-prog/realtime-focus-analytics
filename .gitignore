@@ -7,3 +7,4 @@ sessions.db
 shared_state.json
 .idea/
 .vscode/
+*.mp4

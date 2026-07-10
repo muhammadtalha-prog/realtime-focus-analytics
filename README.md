@@ -14,6 +14,11 @@ A privacy-first, webcam-based productivity tool that infers your attention and f
 
 All 5 signals → **weighted sliding-window heuristic → Focus Score [0–100]** → EMA-smoothed for display
 
+## Key Features
+*   **On-Screen Alert Banners**: Flashing visual warning panels (`WARNING: DROWSINESS DETECTED` in red / `ALERT: FOCUS DRIFT DETECTED` in orange) overlay directly on the camera viewport in real time.
+*   **Automatic Session Video Recording**: Saves processed video captures (mirror-flipped with the skeleton mesh and HUD overlays) directly to the project root folder as `.mp4` files upon exit.
+
+
 ## Project structure
 
 ```
