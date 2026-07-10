@@ -64,6 +64,10 @@ class FocusScorer:
         self.calibration_ears = []
         self.ear_baseline = 0.28
         self.ear_closed_thresh = 0.18
+        
+        # Drowsiness temporal counter (filters out blinks/jitter, triggers after ~1.5 seconds)
+        self.drowsy_counter = 0
+        self.drowsy_limit = 22
 
     def update(self, features: dict | None, fps: float = 15.0) -> dict:
         """
@@ -182,8 +186,18 @@ class FocusScorer:
         mar = features.get("mar", 0.0)
         yaw = abs(features.get("yaw", 0.0))
 
-        if ear < self.ear_closed_thresh or mar > MAR_YAWN_THRESH:
+        # Check for immediate drowsiness indicators (small EAR or large MAR yawning)
+        is_drowsy_signal = (ear < self.ear_closed_thresh) or (mar > MAR_YAWN_THRESH)
+
+        if is_drowsy_signal:
+            self.drowsy_counter += 1
+        else:
+            self.drowsy_counter = max(0, self.drowsy_counter - 2)
+
+        # Trigger drowsiness state only if indicators are sustained
+        if self.drowsy_counter >= self.drowsy_limit:
             return "DROWSY"
+
         if yaw > HEAD_YAW_THRESH or score < 0.40:
             return "DISTRACTED"
         if score >= 0.70:
