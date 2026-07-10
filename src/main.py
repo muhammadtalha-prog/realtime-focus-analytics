@@ -246,6 +246,19 @@ def main():
         draw_face_mesh(frame, landmarks.get("face"), h, w,
                        colour=state_colour(result["state"]))
 
+        # ── Draw real-time alert banner overlay ────────────────────────────────
+        state = result.get("state", "AWAY")
+        hud_w = 230
+        content_w = w - hud_w
+        if state == "DROWSY":
+            cv2.rectangle(frame, (15, h - 75), (content_w - 15, h - 25), (0, 0, 255), cv2.FILLED)
+            cv2.putText(frame, "WARNING: DROWSINESS DETECTED", (35, h - 42),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.70, (255, 255, 255), 2, cv2.LINE_AA)
+        elif state == "DISTRACTED":
+            cv2.rectangle(frame, (15, h - 75), (content_w - 15, h - 25), (0, 165, 255), cv2.FILLED)
+            cv2.putText(frame, "ALERT: FOCUS DRIFT DETECTED", (35, h - 42),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.70, (255, 255, 255), 2, cv2.LINE_AA)
+
         # ── HUD ───────────────────────────────────────────────────────────────
         draw_hud(frame, h, w, result, features, fps, now - start_time)
 

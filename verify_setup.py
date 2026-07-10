@@ -11,16 +11,20 @@ try:
 except Exception as e:
     print("Failed to import MediaPipe:", e)
 
-
+try:
+    from src.landmark_extractor import LandmarkExtractor
+    print("Initializing LandmarkExtractor...")
+    extractor = LandmarkExtractor()
+    print("LandmarkExtractor initialized successfully.")
+except Exception as e:
+    print("Failed to load LandmarkExtractor:", e)
 
 try:
-    from object_detector import ObjectDetector
-    print("Initializing ObjectDetector wrapper...")
-    detector = ObjectDetector()
-    detector.start()
-    print("ObjectDetector started successfully.")
-    detector.stop()
+    from src.feature_engineer import FeatureEngineer
+    from src.focus_scorer import FocusScorer
+    from src.session_logger import SessionLogger
+    print("All core modules (FeatureEngineer, FocusScorer, SessionLogger) imported successfully.")
 except Exception as e:
-    print("Failed to load ObjectDetector wrapper:", e)
+    print("Failed to load core modules:", e)
 
-print("All dependencies checked successfully!")
+print("Verification complete!")
