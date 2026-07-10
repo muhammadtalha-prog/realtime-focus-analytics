@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.task
+*.tflite
+sessions.db
+shared_state.json
+.idea/
+.vscode/
