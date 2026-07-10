@@ -257,7 +257,16 @@ def main():
         state = result.get("state", "AWAY")
         hud_w = 230
         content_w = w - hud_w
-        if state == "DROWSY":
+        calibrated = result.get("calibrated", True)
+
+        if not calibrated:
+            # Draw calibration overlay (blinks between cyan and green every second)
+            pulse = int(time.time() * 2) % 2
+            bar_color = (255, 242, 0) if pulse == 0 else (0, 220, 100) # Cyan or Green
+            cv2.rectangle(frame, (15, h - 75), (content_w - 15, h - 25), bar_color, cv2.FILLED)
+            cv2.putText(frame, "CALIBRATING EYE GEOMETRY (PLEASE LOOK AT CAMERA)...", (35, h - 42),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 0, 0), 2, cv2.LINE_AA)
+        elif state == "DROWSY":
             cv2.rectangle(frame, (15, h - 75), (content_w - 15, h - 25), (0, 0, 255), cv2.FILLED)
             cv2.putText(frame, "WARNING: DROWSINESS DETECTED", (35, h - 42),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.70, (255, 255, 255), 2, cv2.LINE_AA)

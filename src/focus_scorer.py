@@ -57,6 +57,13 @@ class FocusScorer:
         self._frames_per_second: float = 15.0  # updated by main loop
         self._ema_score: float = 0.85
         self._ema_active: bool = False
+        
+        # Adaptive EAR calibration for different eye shapes
+        self.calibrated = False
+        self.calibration_frames = 120  # ~8 seconds at 15 fps
+        self.calibration_ears = []
+        self.ear_baseline = 0.28
+        self.ear_closed_thresh = 0.18
 
     def update(self, features: dict | None, fps: float = 15.0) -> dict:
         """
@@ -76,14 +83,26 @@ class FocusScorer:
         if features is None:
             # Face not visible
             score = self._smooth(0.0)
-            return {"score": score, "state": "AWAY", "components": {}}
+            return {"score": score, "state": "AWAY", "components": {}, "calibrated": self.calibrated}
 
         self._frames_per_second = max(fps, 1.0)
         self._window.append(features)
 
-        # ── Blink detection (EAR crossing threshold) ─────────────────────────
         ear = features["ear"]
-        if self._prev_ear >= EAR_CLOSED_THRESH > ear:
+
+        # ── Adaptive EAR Calibration ──────────────────────────────────────────
+        if not self.calibrated:
+            self.calibration_ears.append(ear)
+            if len(self.calibration_ears) >= self.calibration_frames:
+                # Use median to avoid blink outliers during calibration phase
+                self.ear_baseline = float(np.median(self.calibration_ears))
+                # Set closed threshold to 60% of baseline
+                self.ear_closed_thresh = max(self.ear_baseline * 0.60, 0.12)
+                self.calibrated = True
+                print(f"[CALIBRATION] Complete. Baseline EAR: {self.ear_baseline:.3f}, Closed Thresh: {self.ear_closed_thresh:.3f}")
+
+        # ── Blink detection (EAR crossing threshold) ─────────────────────────
+        if self._prev_ear >= self.ear_closed_thresh > ear:
             self._blink_count += 1
         self._prev_ear = ear
         self._blink_window.append(self._blink_count)
@@ -147,6 +166,7 @@ class FocusScorer:
                 "yawn":    round(yawn_score,    3),
             },
             "blink_per_min": round(blink_per_min, 1),
+            "calibrated": self.calibrated,
         }
 
     def _smooth(self, value: float) -> float:
@@ -157,13 +177,12 @@ class FocusScorer:
             self._ema_score = EMA_ALPHA * value + (1 - EMA_ALPHA) * self._ema_score
         return round(float(self._ema_score), 3)
 
-    @staticmethod
-    def _classify(score: float, features: dict) -> str:
+    def _classify(self, score: float, features: dict) -> str:
         ear = features.get("ear", 1.0)
         mar = features.get("mar", 0.0)
         yaw = abs(features.get("yaw", 0.0))
 
-        if ear < EAR_CLOSED_THRESH or mar > MAR_YAWN_THRESH:
+        if ear < self.ear_closed_thresh or mar > MAR_YAWN_THRESH:
             return "DROWSY"
         if yaw > HEAD_YAW_THRESH or score < 0.40:
             return "DISTRACTED"
