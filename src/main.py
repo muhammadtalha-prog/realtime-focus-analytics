@@ -224,6 +224,13 @@ def main():
     prev_time  = start_time
     fps        = 20.0
 
+    # Initialize VideoWriter to record the processed video to disk
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    session_time = time.strftime("%Y%m%d_%H%M%S")
+    video_filename = f"session_{session_time}.mp4"
+    video_writer = cv2.VideoWriter(video_filename, fourcc, 20.0, (w, h))
+    print(f"Recording session video to: {video_filename}")
+
     cv2.namedWindow(WIN_TITLE, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WIN_TITLE, 1280, 720)
 
@@ -266,6 +273,9 @@ def main():
         logger.log(result, features)
         logger.write_shared_state(result, features, fps)
 
+        # Write frame to the video recording file
+        video_writer.write(frame)
+
         # ── Display ───────────────────────────────────────────────────────────
         cv2.imshow(WIN_TITLE, frame)
 
@@ -279,6 +289,7 @@ def main():
             break
 
     logger.end_session()
+    video_writer.release()
     cap.release()
     cv2.destroyAllWindows()
 
